@@ -1,43 +1,99 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:saad_test/models/task_model.dart';
-import 'package:saad_test/repositories/task_repository.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:saad_test/models/task_model.dart';
+import 'package:saad_test/services/local_db_servic.dart';
 
 class HomeController extends GetxController {
-  final TaskRepository _repository = TaskRepository();
-
   var tasks = <TaskModel>[].obs;
   var isLoading = false.obs;
-  var isSortedByPriority = false.obs;
+  var isOffline = false.obs; // banner control
+
+  late final Connectivity _connectivity;
 
   @override
   void onInit() {
     super.onInit();
+
+    _connectivity = Connectivity();
+
+    _connectivity.onConnectivityChanged.listen((result) {
+      isOffline.value = result == ConnectivityResult.none;
+    });
+
     fetchTasks();
   }
 
-  Future<void> fetchTasks() async {
+  Future<bool> _hasRealInternet() async {
     try {
-      isLoading.value = true;
-
-      var connectivityResult = await Connectivity().checkConnectivity();
-
-      if (connectivityResult != ConnectivityResult.none) {
-        tasks.value = await _repository.fetchTasksOnline();
-      } else {
-        tasks.value = await _repository.fetchTasksOffline();
+      final result = await InternetAddress.lookup('google.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        return true;
       }
-    } catch (e) {
-      tasks.value = await _repository.fetchTasksOffline();
+      return false;
+    } on SocketException catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> fetchTasks({BuildContext? context}) async {
+    isLoading.value = true;
+
+    try {
+      // final hasInternet = connectivityResult != ConnectivityResult.none;
+      // isOffline.value = !hasInternet; // update banner immediately
+      final hasInternet = await _hasRealInternet();
+      isOffline.value = !hasInternet;
+      if (hasInternet) {
+        try {
+          final snapshot = await FirebaseFirestore.instance
+              .collection("Tasks")
+              .get();
+
+          final onlineTasks = snapshot.docs
+              .map((doc) => TaskModel.fromFirestore(doc))
+              .toList();
+          tasks.assignAll(onlineTasks);
+
+          if (onlineTasks.isNotEmpty) {
+            await LocalDbService().insertTasks(onlineTasks);
+          }
+        } on FirebaseException catch (_) {
+          // Firestore error → fallback offline
+          final offlineTasks = await LocalDbService().getTasks();
+          tasks.assignAll(offlineTasks);
+          isOffline.value = true;
+        } on SocketException catch (_) {
+          final offlineTasks = await LocalDbService().getTasks();
+          tasks.assignAll(offlineTasks);
+          isOffline.value = true;
+        } catch (_) {
+          final offlineTasks = await LocalDbService().getTasks();
+          tasks.assignAll(offlineTasks);
+          isOffline.value = true;
+        }
+      } else {
+        final offlineTasks = await LocalDbService().getTasks();
+        tasks.assignAll(offlineTasks);
+        isOffline.value = true;
+      }
+    } catch (_) {
+      final offlineTasks = await LocalDbService().getTasks();
+      tasks.assignAll(offlineTasks);
+      isOffline.value = true;
     } finally {
       isLoading.value = false;
     }
   }
 
   void sortByPriority() {
-    isSortedByPriority.toggle();
-
     tasks.sort((a, b) => b.priority.compareTo(a.priority));
     tasks.refresh();
+  }
+
+  void refreshApp({BuildContext? context}) {
+    fetchTasks(context: context);
   }
 }

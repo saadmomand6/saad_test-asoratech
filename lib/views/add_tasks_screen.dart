@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:saad_test/constants/colors.dart';
+import 'package:saad_test/utils/custom_button.dart';
+import 'package:saad_test/utils/custom_dropdown.dart';
+import 'package:saad_test/utils/custom_spaces.dart';
+import 'package:saad_test/utils/custom_textfield.dart';
 import 'package:saad_test/view_models/task_view_models.dart';
+
 class AddTaskScreen extends StatelessWidget {
   AddTaskScreen({super.key});
 
@@ -9,86 +15,130 @@ class AddTaskScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Add Task"),
-        centerTitle: true,
+      backgroundColor: AppColors.textBlueColor,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton:  Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+        child: Obx(
+                () => CustomButton(
+                  showBorder: false,
+                  isIcon: false,
+                  height: Get.height * 0.06,
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.buttonlinearYellowColor,
+                      AppColors.buttonlinearLightYellowColor,
+                    ],
+                  ),
+
+                  title: "Add Task",
+                  textColor: AppColors.blackColor,
+                  isLoading: controller.isLoading.value,
+                  pressed: () {
+                    controller.addTask();
+                  },
+                ),
+              ),
       ),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back,
+              color: AppColors.whiteColor),
+          onPressed: () {
+            Get.back();
+          },
+        ),
+
+        title: const Text("Add Task", style: TextStyle(color: AppColors.whiteColor),), centerTitle: true, backgroundColor: AppColors.blackColor,),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          crossAxisAlignment: CrossAxisAlignment.center,
 
+          children: [
+             const Text(
+              "Title",
+              style: TextStyle(
+                color: AppColors.whiteColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+             SpaceH20(),
             /// Title Field
-            TextField(
+            CustomTextField(
+              obscureText: false,
+              inputType: TextInputType.name,
               controller: controller.titleController,
-              decoration: const InputDecoration(
-                labelText: "Task Title",
-                border: OutlineInputBorder(),
+              radius: 10,
+              textAlign: TextAlign.center,
+              inputTextColor: AppColors.textBlueColor,
+              fontSize: 16,
+              fontweight: FontWeight.bold,
+              fieldColor: AppColors.whiteColor,
+              hintColor: AppColors.textBlueColor,
+              hintText: "Enter Title",
+            ),
+
+            SpaceH20(),
+             const Text(
+              "Category",
+              style: TextStyle(
+                color: AppColors.whiteColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+             SpaceH20(),
+            Obx(
+              () => CustomDropdown<String>(
+                
+                items: controller.categories,
+                selectedItem: controller.selectedCategory.value,
+                hintText: "Select Task Category",
+                onChanged: (value) {
+                  controller.setCategory(value);
+                },
+                icon: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.whiteColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.arrow_drop_down,
+                    color: AppColors.linearDarkBlueColor,
+                  ),
+                ),
               ),
             ),
 
-            const SizedBox(height: 20),
+            SpaceH30(),
 
-            /// Category Dropdown
-            Obx(() => DropdownButtonFormField<String>(
-                  value: controller.selectedCategory.value,
-                  decoration: const InputDecoration(
-                    labelText: "Category",
-                    border: OutlineInputBorder(),
-                  ),
-                  items: controller.categories
-                      .map(
-                        (category) => DropdownMenuItem(
-                          value: category,
-                          child: Text(category),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    controller.selectedCategory.value = value!;
-                  },
-                )),
+            const Text("Priority", style: TextStyle(
+              color: AppColors.whiteColor,
+              fontWeight: FontWeight.bold, fontSize: 20),),
+            SpaceH10(),
 
-            const SizedBox(height: 20),
-
-            /// Priority Rating (Stars)
-            const Text("Priority"),
-
-            const SizedBox(height: 10),
-
-            Obx(() => Row(
-                  children: List.generate(5, (index) {
-                    return IconButton(
-                      onPressed: () {
-                        controller.priority.value = index + 1;
-                      },
-                      icon: Icon(
-                        Icons.star,
-                        color: controller.priority.value > index
-                            ? Colors.orange
-                            : Colors.grey,
-                      ),
-                    );
-                  }),
-                )),
-
-            const SizedBox(height: 30),
-
-            /// Add Button
-            Obx(() => SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: controller.isLoading.value
-                        ? null
-                        : controller.addTask,
-                    child: controller.isLoading.value
-                        ? const CircularProgressIndicator(
-                            color: Colors.white,
-                          )
-                        : const Text("Add Task"),
-                  ),
-                )),
+            Obx(
+              () => Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  return IconButton(
+                    onPressed: () {
+                      controller.priority.value = index + 1;
+                    },
+                    icon: Icon(
+                      Icons.star,
+                      color: controller.priority.value > index
+                          ? AppColors.primaryColor
+                          : Colors.grey,
+                    ),
+                  );
+                }),
+              ),
+            ),
           ],
         ),
       ),

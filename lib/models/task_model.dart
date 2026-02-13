@@ -18,14 +18,27 @@ class TaskModel {
   /// Firestore → Model
   factory TaskModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+
+    DateTime createdAt;
+
+    if (data['createdAt'] is Timestamp) {
+      createdAt = (data['createdAt'] as Timestamp).toDate();
+    } else if (data['createdAt'] is int) {
+      createdAt = DateTime.fromMillisecondsSinceEpoch(data['createdAt']);
+    } else {
+      createdAt = DateTime.now();
+    }
+
     return TaskModel(
       id: doc.id,
-      title: data['title'],
-      category: data['category'],
-      priority: data['priority'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      title: data['title'] ?? '',
+      category: data['category'] ?? '',
+      priority: data['priority'] ?? 1,
+      createdAt: createdAt,
     );
   }
+
+
 
   /// Model → Firestore
   Map<String, dynamic> toFirestore() {
@@ -33,7 +46,7 @@ class TaskModel {
       "title": title,
       "category": category,
       "priority": priority,
-      "createdAt": createdAt,
+      "createdAt": FieldValue.serverTimestamp(),
     };
   }
 
