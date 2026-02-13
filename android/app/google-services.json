@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "122705779371",
+    "project_id": "saadtest-dd38b",
+    "storage_bucket": "saadtest-dd38b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:122705779371:android:b211e58759323a020435ee",
+        "android_client_info": {
+          "package_name": "com.example.saad_test"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXVKezxtJEWD8a_T4UONRENOEsnBBOEEw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
