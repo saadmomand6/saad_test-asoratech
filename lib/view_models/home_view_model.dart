@@ -11,6 +11,10 @@ class HomeController extends GetxController {
   var isLoading = false.obs;
   var isOffline = false.obs; // banner control
 
+   // Selected filters
+  final RxString selectedCategory = ''.obs;
+  final RxString selectedSort = 'High → Low'.obs; // default sort
+
   late final Connectivity _connectivity;
 
   @override
@@ -24,6 +28,15 @@ class HomeController extends GetxController {
     });
 
     fetchTasks();
+  }
+  void sortByPriorityFiltered(List<TaskModel> taskList) {
+    taskList.sort((a, b) => b.priority.compareTo(a.priority));
+  }
+
+  void sortByPriority() {
+    // Sort the whole list by priority
+    tasks.sort((a, b) => b.priority.compareTo(a.priority));
+    tasks.refresh();
   }
 
   Future<bool> _hasRealInternet() async {
@@ -88,10 +101,6 @@ class HomeController extends GetxController {
     }
   }
 
-  void sortByPriority() {
-    tasks.sort((a, b) => b.priority.compareTo(a.priority));
-    tasks.refresh();
-  }
 
   void refreshApp({BuildContext? context}) {
     fetchTasks(context: context);
